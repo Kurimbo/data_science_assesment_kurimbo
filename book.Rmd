@@ -1,0 +1,84 @@
+---
+title: "Gapminder Analysis"
+author: "Elias Ciudad"
+date: "2024-08-25"
+output: html_document
+---
+
+```{r setup, include=FALSE,error=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(error = FALSE)
+
+```
+
+## Library and Data Loading
+
+```{r loading libraries, echo=FALSE,error=FALSE,include=FALSE}
+library(ggpubr)
+library(kableExtra)
+library(plotly)
+library(styler)
+library(tidyverse)
+library(ggplot2)
+library(devtools)
+library(corrr)
+library(rstatix)
+library(outliers)
+```
+
+```{r Loading data , echo=FALSE,error=FALSE,include=FALSE}
+gapminder <- read_csv("D:\\Academical Things\\Programming\\R\\BRC\\datasets\\gapminder_clean.csv")
+View(gapminder)
+```
+
+```{r Question One, echo=FALSE,error=FALSE,include=FALSE}
+gapminder_1962 <- gapminder %>%
+  filter(Year == 1962)
+
+
+```
+
+## Testing for Outlier
+
+```{r Question One--Outlier testing, echo=FALSE,error=FALSE}
+summary(gapminder_1962$gdpPercap)
+boxplot(gapminder_1962$`CO2 emissions (metric tons per capita)`)
+grubbs.test(gapminder_1962$`CO2 emissions (metric tons per capita)`)
+
+```
+
+The result of the Grubbs test for one outlier indicates that the row with a value of 42.637 for C02 emissions (metric tons per capita), is an outlier. Therefore, we are going to exclude it from the filtered dataset to make data interpretation more concise.
+
+```{r Question One --Clean Dataset, echo=FALSE,error=FALSE,include=TRUE}
+gapminder_1962_clean <- gapminder %>%
+  filter(Year == 1962) %>% 
+  filter(...1 !=1250)
+
+gapminder_1962_clean %>% 
+  ggplot(aes(x = `CO2 emissions (metric tons per capita)`, y = gdpPercap)) +
+  geom_point(color = "blue", size = 3, alpha = 0.7) +  # Blue points, moderate size, with slight transparency
+  scale_x_continuous(name = "CO2 Emissions (Metric Tons per Capita)", 
+                     labels = scales::comma) +  # Adding comma format to x-axis labels
+  scale_y_continuous(name = "GDP per Capita", 
+                     labels = scales::dollar) +  # Adding dollar format to y-axis labels
+  ggtitle("Relationship between CO2 Emissions and GDP per Capita in 1962") +  # Title
+  theme_minimal() +  # Minimalist theme
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),  # Center title, bold and larger
+    axis.title = element_text(size = 14),  # Larger axis titles
+    axis.text = element_text(size = 12),  # Larger axis text
+    panel.grid.major = element_line(color = "gray80", size = 0.5),  # Light gray gridlines
+    panel.grid.minor = element_blank()  # Remove minor gridlines for a cleaner look
+  ) +
+  geom_smooth(method = "lm", color = "red", se = FALSE, linetype = "dashed")
+# Looking at summary statistic of gdp per capita
+
+```
+
+This plot shows something important
+
+```{r Question 2, echo=FALSE,error=FALSE,include=FALSE}
+
+
+
+```
