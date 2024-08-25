@@ -11,7 +11,6 @@ knitr::opts_chunk$set(error = FALSE)
 
 ```
 
-## Library and Data Loading
 
 ```{r loading libraries, echo=FALSE,error=FALSE,include=FALSE}
 library(ggpubr)
@@ -24,6 +23,8 @@ library(devtools)
 library(corrr)
 library(rstatix)
 library(outliers)
+library(DT)
+library(EnvStats)
 ```
 
 ```{r Loading data , echo=FALSE,error=FALSE,include=FALSE}
@@ -31,10 +32,10 @@ gapminder <- read_csv("D:\\Academical Things\\Programming\\R\\BRC\\datasets\\gap
 View(gapminder)
 ```
 
+# Analyzing the relationship between GDP and CO2 emissions {.tabset}
 ```{r Question One, echo=FALSE,error=FALSE,include=FALSE}
 gapminder_1962 <- gapminder %>%
   filter(Year == 1962)
-
 
 ```
 
@@ -43,16 +44,18 @@ gapminder_1962 <- gapminder %>%
 ```{r Question One--Outlier testing, echo=FALSE,error=FALSE}
 summary(gapminder_1962$gdpPercap)
 boxplot(gapminder_1962$`CO2 emissions (metric tons per capita)`)
-grubbs.test(gapminder_1962$`CO2 emissions (metric tons per capita)`)
+rosnerTest(gapminder_1962$`CO2 emissions (metric tons per capita)`, k=2)
 
 ```
 
-The result of the Grubbs test for one outlier indicates that the row with a value of 42.637 for C02 emissions (metric tons per capita), is an outlier. Therefore, we are going to exclude it from the filtered dataset to make data interpretation more concise.
+The result of the rosner test for multiple outlier indicates that the rows with a value of 42.637 and 36.01 for C02 emissions (metric tons per capita), are outliers. Therefore, we are going to exclude them from the filtered dataset to make data interpretation more concise.
+
+
 
 ```{r Question One --Clean Dataset, echo=FALSE,error=FALSE,include=TRUE}
 gapminder_1962_clean <- gapminder %>%
   filter(Year == 1962) %>% 
-  filter(...1 !=1250)
+  filter(!(...1 %in% c(1250, 1430)))
 
 gapminder_1962_clean %>% 
   ggplot(aes(x = `CO2 emissions (metric tons per capita)`, y = gdpPercap)) +
@@ -75,10 +78,53 @@ gapminder_1962_clean %>%
 
 ```
 
-This plot shows something important
+The plot above shows something important
 
-```{r Question 2, echo=FALSE,error=FALSE,include=FALSE}
+## Correlation between GDP and CO2 emissions per metric ton
 
+```{r Question 2, echo=FALSE,error=FALSE,include=TRUE}
+cor.test(gapminder_1962_clean$`CO2 emissions (metric tons per capita)`,gapminder_1962_clean$gdpPercap) %>% tidy() %>% kbl() %>% kable_styling("striped")
+```
+Interpreting the results of the correlation test we start by looking at the p-value, cor value:
 
+  -A correlation score (estimate) of 0.806 indicates a strong positive relationship between the values of GDP and CO2 emissions. As GDP increase, CO2 emission also tend to increase.
+
+  -Since it is smaller than 0.05 we asses that the result of this correlation test is statistically significant.
+  
+  -Confidence Interval: The 95% confidence interval suggests that even the lower bound (0.728) indicates a strong positive correlation, reinforcing the strength of the relationship.
+  
+## What year has the strongest correlation between CO2 and GDP
+  
+```{r Question 3, echo=FALSE,error=FALSE,include=TRUE}
+ gapminder %>%
+  select(Year, gdpPercap, `CO2 emissions (metric tons per capita)`) %>%
+  group_by(Year) %>%
+  summarise(correlation = cor(gdpPercap, `CO2 emissions (metric tons per capita)`, use = "complete.obs")) %>%
+  filter(correlation == max(correlation))
 
 ```
+From this we can see that the year with the strongest correlation is 1967 with a strong positive correlation of 0.939
+
+```{r ,echo=FALSE,error=FALSE}
+gapminder_1967<- gapminder %>%
+  filter(Year == 1967) 
+         
+rosnerTest(gapminder_1967$`CO2 emissions (metric tons per capita)`, k=2)
+
+```
+The result of the rosner test for multiple outlier indicates that the rows with a value of 77.69 and 43.42 for C02 emissions (metric tons per capita), are outliers. Therefore, we are going to exclude them from the filtered dataset to make data interpretation more concise.
+
+```{r ,echo=FALSE,error=FALSE}
+gapminder_1967_clean <- gapminder %>%
+  filter(Year == 1967) %>% 
+  filter(!(...1 %in% c(1951, 1251)))
+
+interactive_plot <-  ggplot(data = gapminder_1967_clean, mapping = aes(x = gdpPercap, y = `CO2 emissions (metric tons per capita)`, color = continent, size = pop)) +
+  geom_point() +
+  theme_pubr() +
+  scale_x_log10()
+
+ggplotly(interactive_plot)
+```
+
+
